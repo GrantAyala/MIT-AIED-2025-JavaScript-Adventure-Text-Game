@@ -1,1 +1,1 @@
-# MIT-AIED-2025-JavaScript-Adventure-Control
+# MIT-AIED-2025-JavaScript-Adventure-Text-Game
