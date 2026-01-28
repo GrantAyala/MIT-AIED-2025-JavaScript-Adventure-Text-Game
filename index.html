@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The JavaScript Adventure (O)</title>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WSBHT54R');</script>
+    <!-- End Google Tag Manager -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Using a more modern font and some custom styles to complement Tailwind */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Custom styles for the game and editor layout */
+    #puzzle-area {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    #puzzle-top-panel {
+      display: flex;
+      flex-direction: column;
+      md: flex-row;
+      gap: 1rem;
+    }
+
+    #code-editor {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      background-color: #1f2937;
+      /* gray-800 */
+      color: #d1d5db;
+      /* gray-300 */
+      border: 1px solid #4b5563;
+      /* gray-600 */
+      min-height: 250px;
+      resize: vertical;
+    }
+
+    #output-console {
+      background-color: #111827;
+      /* gray-900 */
+      color: #9ca3af;
+      /* gray-400 */
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    /* Style for the quiz options */
+    .quiz-options label {
+      display: block;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #e5e7eb;
+      /* gray-200 */
+      border-radius: 0.375rem;
+      /* rounded-md */
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .quiz-options label:hover {
+      background-color: #f3f4f6;
+      /* gray-100 */
+    }
+
+    /* Style for video embed to be responsive */
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      /* 16:9 aspect ratio */
+      height: 0;
+      overflow: hidden;
+      max-width: 100%;
+      background: #000;
+      border-radius: 0.5rem;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Custom focus style for accessibility */
+    *:focus-visible {
+      outline: 2px solid #2563eb;
+      /* blue-600 */
+      outline-offset: 2px;
+      border-radius: 0.25rem;
+      /* rounded-sm */
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 p-4 md:p-6 flex flex-col min-h-screen">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WSBHT54R"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+
+  <div id="app-container" class="bg-white p-5 md:p-8 rounded-xl shadow-2xl flex-grow flex flex-col">
+    <!-- Main Header -->
+    <header id="main-header" class="border-b pb-4 mb-6">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">The JavaScript Adventure</h1>
+      <h2 id="unit-title" class="text-xl md:text-2xl font-semibold mt-1 text-blue-600">Unit Title</h2>
+    </header>
+
+    <!-- Main Content Area -->
+    <div id="main-content" class="flex flex-col lg:flex-row gap-6 md:gap-8 flex-grow">
+
+      <!-- Left Column: Lesson & Quiz -->
+      <div id="lesson-quiz-area" class="flex-shrink-0 lg:w-2/5 xl:w-1/3 space-y-6">
+        <!-- Lesson Content Area -->
+        <div id="lesson-area" class="border border-gray-200 p-4 rounded-lg bg-gray-50">
+          <h3 class="text-lg font-semibold mb-3 text-gray-700">Lesson</h3>
+          <div id="lesson-content" class="prose prose-sm max-w-none text-gray-600 space-y-3"></div>
+          <div id="lesson-video-container" class="mt-4"></div>
+          <div id="lesson-demo" class="mt-4 hidden">
+            <h3 class="text-md font-semibold mb-2 text-gray-700">Example:</h3>
+            <pre id="lesson-demo-code" class="bg-gray-800 text-white p-3 rounded-md text-sm overflow-x-auto"></pre>
+          </div>
+          <button id="start-quiz-button" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none">Ready for the Quiz!</button>
+        </div>
+
+        <!-- Quiz Area -->
+        <div id="quiz-area" class="border border-gray-200 p-4 rounded-lg bg-gray-50 hidden">
+          <h3 class="text-lg font-semibold mb-3 text-gray-700">Quiz Time!</h3>
+          <form id="quiz-form" class="space-y-4"></form>
+          <button id="submit-quiz-button" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md">Check My Answers</button>
+          <p id="quiz-feedback" class="mt-3 text-sm font-medium text-center"></p>
+        </div>
+      </div>
+
+      <!-- Right Column: Challenge Arena -->
+      <div id="challenge-area" class="flex-grow lg:w-3/5 xl:w-2/3 border border-gray-200 p-4 rounded-lg bg-gray-50 hidden">
+        <h3 class="text-lg font-semibold mb-2 text-gray-700">Coding Challenge</h3>
+        <div id="instructions-area" class="mb-4 p-3 bg-blue-100 border border-blue-200 rounded-md text-sm text-blue-800"></div>
+
+        <!-- Top Panel for Code and Console -->
+        <div id="puzzle-top-panel" class="flex flex-col md:flex-row gap-4 flex-grow">
+          <!-- Code Editor -->
+          <div class="flex-1 min-w-0 flex flex-col">
+            <label for="code-editor" class="block text-sm font-medium text-gray-700 mb-1">Your Code:</label>
+            <textarea id="code-editor" spellcheck="false" class="w-full p-2.5 border rounded-md shadow-sm flex-grow"></textarea>
+          </div>
+        </div>
+
+        <!-- Bottom Panel for Console and Controls -->
+        <div class="mt-2">
+          <label for="output-console" class="block text-sm font-medium text-gray-700 mb-1">Console:</label>
+          <div id="output-console" class="w-full p-2 border rounded-md"></div>
+        </div>
+        <div id="puzzle-controls" class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div class="flex items-center">
+            <button id="run-code-button" disabled class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded-lg shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none">Run Simulation</button>
+            <button id="skip-level-button" hidden="hidden" class="ml-4 text-xs text-gray-500 hover:text-gray-700 hover:underline">Skip Puzzle</button>
+          </div>
+          <button id="proceed-button" disabled class="w-full sm:w-auto bg-purple-600 text-white font-bold py-2 px-6 rounded-lg shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none">Next Unit &raquo;</button>
+          <button id="survey-button" class="w-full sm:w-auto bg-indigo-400 text-white font-bold py-2 px-6 rounded-lg shadow-md">Exit & Complete Survey</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Completion Message and Report Area -->
+    <div id="final-report-area" class="hidden text-center">
+      <h2 class="text-2xl font-bold text-green-700">Thanks for trying out the JavaScript Adventure!</h2>
+      <div id="tracking-report" class="mt-6 text-left p-6 bg-gray-50 border rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-2xl font-bold text-gray-800">Your Progress Report</h3>
+          <button id="copy-report-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Copy Report</button>
+        </div>
+        <div id="report-content"></div>
+      </div>
+    </div>
+  </div>
+  <footer class="text-center py-4">
+    <p class="text-sm text-gray-400">grant.ayala@sudbury-stem-club.org</p>
+  </footer>
+
+  <script>
+    // --- DOM ELEMENT REFERENCES ---
+    const mainHeader = document.getElementById('main-header');
+    const unitTitle = document.getElementById('unit-title');
+    const mainContent = document.getElementById('main-content');
+    const lessonArea = document.getElementById('lesson-area');
+    const lessonContent = document.getElementById('lesson-content');
+    const lessonVideoContainer = document.getElementById('lesson-video-container');
+    const lessonDemo = document.getElementById('lesson-demo');
+    const lessonDemoCode = document.getElementById('lesson-demo-code');
+    const externalLinksArea = document.getElementById('external-links-area');
+    const externalLinksList = document.getElementById('external-links-list');
+    const startQuizButton = document.getElementById('start-quiz-button');
+    const quizArea = document.getElementById('quiz-area');
+    const quizForm = document.getElementById('quiz-form');
+    const submitQuizButton = document.getElementById('submit-quiz-button');
+    const quizFeedback = document.getElementById('quiz-feedback');
+    const puzzleArea = document.getElementById('challenge-area');
+    const instructionsArea = document.getElementById('instructions-area');
+    const codeEditor = document.getElementById('code-editor');
+    const outputConsole = document.getElementById('output-console');
+    const runCodeButton = document.getElementById('run-code-button');
+    const skipLevelButton = document.getElementById('skip-level-button');
+    const proceedButton = document.getElementById('proceed-button');
+    const surveyButton = document.getElementById('survey-button');
+    const finalReportArea = document.getElementById('final-report-area');
+    const trackingReportDiv = document.getElementById('tracking-report');
+    const reportContentDiv = document.getElementById('report-content');
+    const copyReportButton = document.getElementById('copy-report-button');
+    // --- STATE MANAGEMENT & TRACKING ---
+    let currentUnitIndex = 0;
+    let learnedConcepts = new Set();
+    let currentPuzzle = {};
+    let animationFrameId; // To control the game loop
+    let trackingData = [];
+    let levelStartTime;
+    // --- GAME PHYSICS & OBJECTS ---
+    let platforms = [];
+    const ball = {
+      radius: 10,
+      color: '#0ea5e9'
+    }; // sky-500
+    const target = {
+      color: '#22c55e',
+      height: 10
+    }; // green-500
+    const gravity = 0.2;
+    const friction = 0.9;
+    // --- UNITS DATA ---
+    const units = [{
+        title: "Unit 1 of 6: Calling Functions",
+        lesson: `<p>Welcome to JavaScript! Think of a <strong>function</strong> as a pre-packaged recipe for the computer. When you 'call' a function, you're telling the computer to follow that recipe and perform an action.For example, </p><p><code>console.log()</code> is a very common function. Its recipe is simple: "Take whatever message I give you and print it to the developer console." The console is a special window where coders can see messages and errors.</p><p>The message you give a function is called an <strong>argument</strong>. You place it inside the parentheses. For example, in <code>console.log("Hello")</code>, the string "Hello" is the argument.</p><p><a href="https://www.geeksforgeeks.org/javascript/javascript-console-log-method/" target="_blank" rel="noopener" class="text-blue-600 hover:underline">Further Reading</a></p>`,
+        demoCode: `console.log("This is my first argument!");\n\nCONSOLE OUPUT:\n\nThis is my first argument!`,
+        videoLink: "https://www.youtube.com/embed/CdqT7_6v60E?si=tvLTa3xNq7iCu547",
+        concepts: ['strings', 'console.log', 'functions_calling'],
+        quiz: [{
+            q: "What command prints a message to the console?",
+            options: ["print.message()", "console.log()", "display.text()", "write()"],
+            answer: "console.log()"
+          },
+          {
+            q: "The messages passed to functions inside parentheses are called:",
+            options: ["numbers", "arguments", "variables", "commands"],
+            answer: "arguments"
+          }
+        ],
+        challenge: {
+          instructions: `Your first challenge! Currently the <code>console.log()</code> function is printing <code>hi!</code> Change the arguement in the function to print the exact message "Hello World!" to the console below`,
+          solutionChecker: (output) => output.trim() === "Hello World!"
+        }
+      },
+      {
+        title: "Unit 2 of 6: Storing Information (Variables)",
+        lesson: `<p>Instead of writing the same value over and over, we can store it in a <strong>variable</strong>. Think of it as a labeled box where you can keep a piece of information, like a number or a string. If you need that information later, you just use the box's label!</p><p>We use <code>let</code> to create a variable when its value might change later (like a game score). We use <code>const</code> when the value should never change (like your birthday).</p><p>Example: <code>let score = 100;</code> creates a variable named <code>score</code>. Now you can use the word <code>score</code> in your code instead of the number 100.</p><p><a href="https://www.w3schools.com/js/js_variables.asp" target="_blank" rel="noopener" class="text-blue-600 hover:underline">Further Reading</a></p>`,
+        demoCode: `let playerName = "Alex";\nconst game = "Platform Puzzle";\nconsole.log(playerName + " is playing " + game);\n\nCONSOLE OUTPUT:\n\nAlex is playing Platform Puzzle`,
+        videoLink: "https://www.youtube.com/embed/7xStNKTM3bE?si=8qi-sHTfvaBRzbFI",
+        concepts: ['variables', 'let', 'const', 'numbers', 'assignment'],
+        quiz: [{
+            q: "Which keyword creates a variable that can change?",
+            options: ["const", "let", "store", "static"],
+            answer: "let"
+          },
+          {
+            q: "What is `let x = 10;` doing?",
+            options: ["Storing 10 in variable x", "Printing 10 to console", "Checking if x is 10", "Creating a function"],
+            answer: "Storing 10 in variable x"
+          }
+        ],
+        challenge: {
+          instructions: `The variable <code>city</code> is currently storing the city San Francisco. Change the city the variable is storing to New York so that it correctly prints out New York.`,
+          solutionChecker: (output) => output.trim() === "New York"
+        }
+      },
+      {
+        title: "Unit 3 of 6: Making Decisions (if/else)",
+        lesson: `<p>What if you want your code to do different things in different situations? For that, we use <strong><code>if</code></strong> statements! An <code>if</code> statement checks if a condition is true. If it is, a specific block of code runs.</p><p>You can also add an <strong><code>else</code></strong> block. The code in the <code>else</code> block will run only if the <code>if</code> condition is false. It's like telling the computer: "IF this is true, do task A. OTHERWISE, do task B."</p><p>To check for true/false conditions, we often use <strong>boolean</strong> values (<code>true</code> or <code>false</code>) and comparison operators like <code>===</code> (is exactly equal to).</p><p><a href="https://www.w3schools.com/js/js_if_else.asp" target="_blank" rel="noopener" class="text-blue-600 hover:underline">Further Reading</a></p>`,
+        demoCode: `let hasKey = false;\n\nif (hasKey === true) {\n  console.log("You open the door!");\n} else {\n  console.log("The door is locked.");\n}\n\nCONSOLE OUTPUT:\n\nThe door is locked.`,
+        videoLink: "https://www.youtube.com/embed/oUjiIPOZxSk?si=NojyG5vVu1NFJito",
+        concepts: ['if_else', 'booleans', 'comparison_operators'],
+        quiz: [{
+            q: "What keyword starts a conditional block of code?",
+            options: ["when", "check", "if", "condition"],
+            answer: "if"
+          },
+          {
+            q: "The code inside an `else` block runs when...",
+            options: ["the `if` condition is true", "the `if` condition is false", "it always runs", "the program starts"],
+            answer: "the `if` condition is false"
+          },
+          {
+            q: "Which operator checks if two values are exactly equal?",
+            options: ["=", "==", "===", "!="],
+            answer: "==="
+          }
+        ],
+        challenge: {
+          instructions: `The variable <code>temperature</code> currently reads 90 degrees, and when we run the code it will print out the current temperature. Change the value of <code>temperature</code> so that we print out it's cold.`,
+          solutionChecker: (output) => output.trim() === "it's cold"
+        }
+      },
+      {
+        title: "Unit 4 of 6: Repeating Actions (for Loops)",
+        lesson: `<p>Imagine you need to write <code>console.log()</code> 100 times. That would be exhausting! Instead, we can use a <strong>loop</strong> to repeat an action. A <code>for</code> loop is perfect for when you know exactly how many times you want to repeat.</p><p>It has three parts in its parentheses: <br> **Initialization** (<code>let i = 0</code>): A counter variable is created.<br> **Condition** (<code>i < 5</code>): The loop continues as long as this is true. <br> **Increment** (<code>i++</code>): The counter is increased by one after each repetition.</p><p><a href="https://www.w3schools.com/js/js_loop_for.asp" target="_blank" rel="noopener" class="text-blue-600 hover:underline">Further Reading</a></p>`,
+        demoCode: `// This loop builds a wall of text\nfor (let i = 0; i < 3; i++) {\n  console.log("Line " + i + " of the wall!");\n}\n\nCONSOLE OUTPUT:\n\nLine 0 of the wall!\nLine 1 of the wall!\nLine 2 of the wall!`,
+        videoLink: "https://www.youtube.com/embed/sJZLB0p5QQk?si=UBmmjW1M9M8OffIM",
+        concepts: ['for_loops', 'iteration'],
+        quiz: [{
+            q: "What is the main purpose of a loop?",
+            options: ["To repeat code", "To make decisions", "To store data", "To stop code"],
+            answer: "To repeat code"
+          },
+          {
+            q: "In `for (let i = 0; i < 3; i++)`, how many times does the loop run?",
+            options: ["2", "3", "4", "0"],
+            answer: "3"
+          },
+          {
+            q: "What does `i++` typically do in a loop?",
+            options: ["Double the value of i", "Stop the loop", "Check if i is a number", "Increase i by 1"],
+            answer: "Increase i by 1"
+          }
+        ],
+        challenge: {
+          instructions: `Currently the <code>for</code> loop prints the numbers from 0 to 2. Change the loop to print the numbers from 0 to 9 to the console.`,
+          solutionChecker: (output) => output.trim() === "0\n1\n2\n3\n4\n5\n6\n7\n8\n9"
+        }
+      },
+      {
+        title: "Unit 5 of 6: Storing Lists (Arrays)",
+        lesson: `<p>What if you want to store a list of items, like all the player names in a game? An <strong>Array</strong> lets you store multiple values in a single variable. You create an array with square brackets <code>[]</code>, and separate the items with commas.</p><p>Each item has a numbered position, called an <strong>index</strong>. The trick is that computers start counting from 0! So the first item is at index 0, the second is at index 1, and so on. You access an item by using its index: <code>myArray[0]</code> gets the first item.</p><p><a href="https://www.w3schools.com/js/js_arrays.asp" target="_blank" rel="noopener" class="text-blue-600 hover:underline">Further Reading</a></p>`,
+        demoCode: `let highScores = [980, 955, 870];\nconsole.log("The top score is: " + highScores[0]);\n\nCONSOLE OUTPUT:\n\nThe top score is : 980`,
+        videoLink: "https://www.youtube.com/embed/yQ1fz8LY354?si=o_3Rj4k_rODc6q_r",
+        concepts: ['arrays', 'indexes'],
+        quiz: [{
+            q: "Which symbol is used to create an array?",
+            options: ["{}", "()", "[]", "<>"],
+            answer: "[]"
+          },
+          {
+            q: "If `let pets = ['cat', 'dog', 'fish']`, what is `pets[0]`?",
+            options: ["dog", "cat", "fish", "pets"],
+            answer: "cat"
+          },
+          {
+            q: "What is the index of the LAST element in `['a', 'b', 'c']`?",
+            options: ["1", "2", "3", "last"],
+            answer: "2"
+          }
+        ],
+        challenge: {
+          instructions: `Print the second item, instead of the first, from the array ("Green") to the console.`,
+          solutionChecker: (output) => output.trim() === "Green"
+        }
+      },
+      {
+        title: "Unit 6 of 6: Grouping Data (Objects)",
+        lesson: `<p>Sometimes, a list isn't enough. What if you want to store different pieces of information about a single thing, like a player? An <strong>Object</strong> is perfect for this. Objects store data in <strong>key-value pairs</strong>, created with curly braces <code>{}</code>.</p><p>Think of it like a dictionary entry or a profile card. The <strong>key</strong> is the label (like "name" or "score"), and the <strong>value</strong> is the information for that label. You can easily access a value using 'dot notation': <code>player.score</code> would give you the player's score.</p><p><a href="https://www.w3schools.com/js/js_objects.asp" target="_blank" rel="noopener" class="text-blue-600 hover:underline">Further Reading</a></p>`,
+        demoCode: `let monster = {\n  type: "Goblin",\n  health: 100,\n  isFriendly: false\n};\n\nconsole.log("A " + monster.type + " appeared!");\n\nCONSOLE OUTPUT:\n\nA Goblin appeared!`,
+        videoLink: "https://www.youtube.com/embed/lo7o91qLzxc?si=jL4tqSLwdb_ZIKfm",
+        concepts: ['objects', 'keys_values', 'dot_notation'],
+        quiz: [{
+            q: "Which symbol is used to create an object?",
+            options: ["[]", "()", "{}", "<>"],
+            answer: "{}"
+          },
+          {
+            q: "If `let user = { id: 101 }`, how do you get the id?",
+            options: ["user.id", "user[0]", "user(id)", "user.value"],
+            answer: "user.id"
+          },
+          {
+            q: "In `let data = { x: 50 }`, 'x' is called a...",
+            options: ["value", "property", "key", "index"],
+            answer: "key"
+          }
+        ],
+        challenge: {
+          instructions: `We have an object called <code>book</code> that stores the title, author, and current page. Print out the title of the book using <code>book.title</code>`,
+          solutionChecker: (output) => output.trim() === "The Hobbit"
+        }
+      }
+    ];
+    // --- CORE APP FLOW ---
+    function loadUnit(index) {
+      puzzleArea.classList.remove('hidden');
+      if (index >= units.length) {
+        exitToSurvey();
+        return;
+      }
+      instructionsArea.innerHTML = 'Complete the lesson and the quiz to unlock the challenge!';
+      codeEditor.value = '';
+      outputConsole.textContent = '';
+      levelStartTime = Date.now();
+      if (!trackingData[index]) {
+        trackingData[index] = {
+          unitTitle: units[index].title,
+          timeSpent: 0,
+          quizAttempts: 0,
+          puzzleAttempts: 0
+        };
+      }
+      mainHeader.classList.remove('hidden');
+      mainContent.classList.remove('hidden');
+      mainContent.classList.add('flex');
+      finalReportArea.classList.add('hidden');
+      currentUnitIndex = index;
+      const unit = units[index];
+      unit.concepts.forEach(c => learnedConcepts.add(c));
+      unitTitle.textContent = unit.title;
+      lessonContent.innerHTML = unit.lesson;
+      lessonDemoCode.textContent = unit.demoCode;
+      lessonDemo.classList.toggle('hidden', !unit.demoCode);
+      // --- Video Loader ---
+      lessonVideoContainer.innerHTML = '';
+      if (unit.videoLink) {
+        lessonVideoContainer.innerHTML = `
+                <h3 class="text-md font-semibold mt-6 mb-2 text-gray-700">Helpful Video</h3>
+                <div class="video-container">
+                    <iframe src="${unit.videoLink}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>`;
+      }
+      lessonArea.classList.remove('hidden');
+      quizArea.classList.add('hidden');
+      //puzzleArea.classList.add('hidden');
+        
+      startQuizButton.disabled = false;      
+      runCodeButton.disabled = true;
+      proceedButton.disabled = true;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    }
+
+    function showQuiz() {
+      const unit = units[currentUnitIndex];
+      quizForm.innerHTML = '';
+      quizFeedback.textContent = '';
+      unit.quiz.forEach((q, index) => {
+        const qDiv = document.createElement('div');
+        qDiv.innerHTML = `<label class="block text-sm font-medium text-gray-900 mb-2">${index + 1}. ${q.q}</label>`;
+        const optsDiv = document.createElement('div');
+        optsDiv.className = 'quiz-options';
+        q.options.forEach((opt, i) => {
+          optsDiv.innerHTML += `<label><input type="radio" name="q${index}" value="${opt}" class="mr-2 h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">${opt}</label>`;
+        });
+        qDiv.appendChild(optsDiv);
+        quizForm.appendChild(qDiv);
+      });
+      lessonArea.classList.add('hidden');
+      quizArea.classList.remove('hidden');
+    }
+
+    function checkQuiz() {
+      if (trackingData[currentUnitIndex]) {
+        trackingData[currentUnitIndex].quizAttempts++;
+      }
+      let allCorrect = true;
+      units[currentUnitIndex].quiz.forEach((q, i) => {
+        const selected = quizForm.querySelector(`input[name="q${i}"]:checked`);
+        if (!selected || selected.value !== q.answer) allCorrect = false;
+      });
+      if (allCorrect) {
+        quizFeedback.textContent = 'Correct! Loading puzzle...';
+        quizFeedback.className = 'mt-3 text-sm font-medium text-center text-green-600';
+        setTimeout(loadPuzzle, 1000);
+      } else {
+            quizFeedback.innerHTML = 'Not quite. <a style="text-decoration: underline;" href="#" onclick="quizArea.classList.add(\'hidden\'); loadUnit(currentUnitIndex);" >Review the lesson</a> and try again!';
+            //quizFeedback.className = 'mt-3 text-sm font-medium text-center text-red-600';
+      }
+    }
+
+    function loadPuzzle() {
+      currentChallenge = units[currentUnitIndex].challenge;
+      instructionsArea.innerHTML = currentChallenge.instructions;
+      runCodeButton.disabled = false;
+      startQuizButton.disabled = true;      
+      //-------------------------------------------------------------------------Starter Code-----------------------------------------------------------------
+      const starterCode = [
+`console.log("hi!");`,
+
+`let city = "San Francisco";
+console.log(city);`,
+
+`let temperature = 90;
+if(temperature < 60){
+  console.log("it's cold");
+}else{
+  console.log("Current Temperature: " + temperature);
+}`,
+        
+`for(let i = 0; i < 3; i++){
+  console.log(i);
+}`,
+      
+`let colors = ["Blue", "Green", "Red"];
+console.log(colors[0]);`,
+      
+`let book = {
+  title: "The Hobbit",
+  author: "J.R.R. Tolkien",
+  currentPage: 245
+}`];
+      codeEditor.value = starterCode[currentUnitIndex]; // Clear the editor for a fresh start
+      // Make lesson visible again when puzzle loads
+      lessonArea.classList.remove('hidden');
+      quizArea.classList.add('hidden');
+      puzzleArea.classList.remove('hidden');
+    }
+
+    function proceedToNextUnit() {
+      const endTime = Date.now();
+      const secondsSpent = Math.round((endTime - levelStartTime) / 1000);
+      if (trackingData[currentUnitIndex]) {
+        trackingData[currentUnitIndex].timeSpent += secondsSpent;
+      }
+      loadUnit(currentUnitIndex + 1);
+    }
+
+    function runSimulation() {
+      if (trackingData[currentUnitIndex]) {
+        trackingData[currentUnitIndex].puzzleAttempts++;
+      }
+      outputConsole.textContent = '';
+      proceedButton.disabled = true;
+      const hiddenCode = ["", "", "", "", "", ""]; //Hidden Code
+      var userCode;
+      userCode = hiddenCode[currentUnitIndex] + codeEditor.value;
+      const capturedLogs = [];
+      // Intercept console.log
+      const originalConsoleLog = console.log;
+      console.log = (...args) => {
+        const message = args.map(arg => {
+          if (typeof arg === 'object' && arg !== null) {
+            try {
+              return JSON.stringify(arg);
+            } catch (e) {
+              return String(arg);
+            }
+          }
+          return String(arg);
+        }).join(' ');
+        capturedLogs.push(message);
+      };
+      try {
+        // Execute the user's code safely
+        new Function(userCode)();
+        // Display output and check solution
+        const finalOutput = capturedLogs.join('\n');
+        outputConsole.textContent = finalOutput;
+        if (currentChallenge.solutionChecker(finalOutput)) {
+          outputConsole.textContent += '\n\n✅ Correct! Well done. You can proceed to the next unit.';
+          proceedButton.disabled = false;
+        } else {
+          outputConsole.textContent += '\n\n🤔 Not quite right. Check the instructions and your code, then try again.';
+        }
+      } catch (e) {
+        outputConsole.textContent = `Error: ${e.message}`;
+      } finally {
+        // ALWAYS restore the original console.log
+        console.log = originalConsoleLog;
+      }
+    }
+
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}m ${seconds}s`;
+    }
+
+    function displayTrackingReport() {
+      mainHeader.classList.add('hidden');
+      mainContent.classList.remove('flex');
+      mainContent.classList.add('hidden');
+      finalReportArea.classList.remove('hidden');
+      reportContentDiv.innerHTML = ''; // Clear previous report
+      const table = document.createElement('table');
+      table.className = 'w-full text-sm text-left text-gray-500';
+      table.innerHTML = `
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                <tr>
+                    <th scope="col" class="px-6 py-3">Unit</th>
+                    <th scope="col" class="px-6 py-3 text-center">Time Spent</th>
+                    <th scope="col" class="px-6 py-3 text-center">Quiz Attempts</th>
+                    <th scope="col" class="px-6 py-3 text-center">Challenge Attempts</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+      const tbody = table.querySelector('tbody');
+      trackingData.forEach(data => {
+        const row = document.createElement('tr');
+        row.className = 'bg-white border-b';
+        row.innerHTML = `
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${data.unitTitle}</th>
+                <td class="px-6 py-4 text-center">${formatTime(data.timeSpent)}</td>
+                <td class="px-6 py-4 text-center">${data.quizAttempts}</td>
+                <td class="px-6 py-4 text-center">${data.puzzleAttempts}</td>
+            `;
+        tbody.appendChild(row);
+      });
+      reportContentDiv.appendChild(table);
+    }
+
+    function copyReportToClipboard() {
+      let reportString = "";
+      trackingData.forEach((data, index) => {
+        reportString += `Unit ${index + 1}\t${data.timeSpent}\t${data.quizAttempts}\t${data.puzzleAttempts}\n`;
+      });
+      const textArea = document.createElement("textarea");
+      textArea.value = reportString;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        copyReportButton.textContent = 'Copied!';
+        setTimeout(() => {
+          copyReportButton.textContent = 'Copy Report';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+      document.body.removeChild(textArea);
+    }
+    
+    function exitToSurvey() {
+        window.location.replace(
+            "https://docs.google.com/forms/d/e/1FAIpQLSfnWoraM6MSUDznOTmwlNFuOSMlDLEMMnPKE6fL0B-gJYnD7Q/viewform?usp=header"
+        );
+    }
+    
+    
+    // --- EVENT LISTENERS ---
+    startQuizButton.addEventListener('click', showQuiz);
+    submitQuizButton.addEventListener('click', checkQuiz);
+    runCodeButton.addEventListener('click', runSimulation);
+    skipLevelButton.addEventListener('click', proceedToNextUnit);
+    proceedButton.addEventListener('click', proceedToNextUnit);
+    surveyButton.addEventListener('click', exitToSurvey);
+    copyReportButton.addEventListener('click', copyReportToClipboard);
+      
+    // --- URL PARAM HANDLING FOR SKIP BUTTON ---
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const skipUrlParam = urlParams.get('skip');
+      
+    // --- INITIAL LOAD ---
+    window.onload = () => {
+        if (skipUrlParam == "yes"){
+            skipLevelButton.removeAttribute("hidden");
+        }
+        loadUnit(0);
+    };
+  </script>
+</body>
+
+</html>
